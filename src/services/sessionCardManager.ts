@@ -5,7 +5,7 @@
  * Provides utilities for generating packs and tracking shown cards.
  */
 
-import { CardCSVRow, SessionCard, SessionCardState } from '@/types/pokemon';
+import { CardCSVRow, CardData, SessionCard, SessionCardState } from '@/types/pokemon';
 import { getRandomPendingCards } from './csvManager';
 import { toast } from 'sonner';
 import { downloadAndCompressImage, createImagePlaceholder } from '@/lib/imageUtils';
@@ -24,6 +24,12 @@ const DOWNLOAD_TIMEOUT = 10000; // 10 second timeout per download
 // State management
 let isInitialized = false;
 let isDownloading = false;
+
+type SessionCardData = CardData & {
+  isSessionCard: true;
+  imageData: string;
+  image_url: string;
+};
 
 /**
  * Initialize session card manager
@@ -84,7 +90,7 @@ function saveSessionState(state: SessionCardState): boolean {
     
     try {
       // Strategy 1: Remove cards that have already been shown
-      let reducedState = { ...state };
+      const reducedState = { ...state };
       reducedState.cards = state.cards.filter(card => !state.shownCardIds.includes(card.id));
       
       // If still have cards, try to save
@@ -196,8 +202,9 @@ async function tryDownloadImage(imageUrl: string): Promise<Blob | null> {
         }
       }
       console.log(`[SessionCardManager] ✗ ${strategy.name} failed: ${response.status}`);
-    } catch (error: any) {
-      console.log(`[SessionCardManager] ✗ ${strategy.name} error: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.log(`[SessionCardManager] ✗ ${strategy.name} error: ${message}`);
     }
   }
   
@@ -626,7 +633,7 @@ export function removeCardsFromSession(cardIds: string[]): void {
 /**
  * Convert session cards to format needed by pack opener
  */
-export function convertSessionCardToCardData(sessionCards: SessionCard[]): any[] {
+export function convertSessionCardToCardData(sessionCards: SessionCard[]): SessionCardData[] {
   console.log(`[SessionCardManager] Converting ${sessionCards.length} session cards to CardData format`);
   
   return sessionCards.map(sessionCard => {

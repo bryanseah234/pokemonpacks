@@ -35,7 +35,7 @@ async function loadCSV<T>(filePath: string): Promise<T[]> {
     return dataRows.map(row => {
       const values = parseCSVRow(row);
       const headers = parseCSVRow(header);
-      const obj: Record<string, any> = {};
+      const obj: Record<string, string | number | boolean> = {};
       
       headers.forEach((header, index) => {
         // Handle different data types
@@ -102,7 +102,7 @@ function convertToCSV<T>(data: T[], header: string): string {
   
   const rows = data.map(item => {
     const values = header.split(',').map(key => {
-      const value = (item as any)[key];
+      const value = (item as Record<string, unknown>)[key];
       
       // Handle different data types for CSV formatting
       if (value === undefined || value === null) {

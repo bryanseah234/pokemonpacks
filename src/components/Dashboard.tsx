@@ -15,6 +15,10 @@ interface DashboardProps {
   onBackToHome: () => void;
 }
 
+type MaybeSessionCard = CardData & {
+  isSessionCard?: boolean;
+};
+
 // Cache for card details to avoid repeated API calls
 const cardDetailsCache: Record<string, PokemonTCGCard> = {};
 
@@ -56,7 +60,7 @@ export const Dashboard = ({ favorites, onRemoveFavorite, onBackToHome }: Dashboa
   // Fetch card details when a card is selected
   const fetchCardDetails = useCallback(async (card: CardData) => {
     // If card has isSessionCard flag, it's from session storage and needs API call for details
-    const needsDetailsFetch = (card as any).isSessionCard === true;
+    const needsDetailsFetch = (card as MaybeSessionCard).isSessionCard === true;
     const cardId = card.card.id;
     
     // If it doesn't need details or we already have them cached, use cache

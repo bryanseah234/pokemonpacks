@@ -18,19 +18,19 @@ preloadCardBack();
 type CardSize = 'grid' | 'small' | 'large';
 
 interface PokemonCardProps {
-  card: CardData;
-  className?: string;
-  style?: React.CSSProperties;
-  showBack?: boolean;
-  size?: CardSize;
-  onClick?: () => void;
+  card: CardData;
+  className?: string;
+  style?: React.CSSProperties;
+  showBack?: boolean;
+  size?: CardSize;
+  onClick?: () => void;
 }
 
 const rarityColors: Record<string, string> = {
-  common: 'from-blue-400 to-blue-600',
-  uncommon: 'from-blue-500 to-blue-700',
-  rare: 'from-blue-600 to-blue-800',
-  'ultra-rare': 'from-blue-700 via-blue-800 to-blue-900',
+  common: 'from-blue-400 to-blue-600',
+  uncommon: 'from-blue-500 to-blue-700',
+  rare: 'from-blue-600 to-blue-800',
+  'ultra-rare': 'from-blue-700 via-blue-800 to-blue-900',
 };
 
 // 1. Helper function to get the correct size classes using utility
@@ -44,45 +44,45 @@ export const PokemonCard = ({ card, className, style, showBack = false, size = '
   const [loaded, setLoaded] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showSkeleton, setShowSkeleton] = useState(true);
-  
-  // UPDATED LOGIC: Interactive effect is enabled for 'grid' and 'large' sizes.
-  // It is only disabled for 'small' and when the card back is showing.
-  const isInteractive = size !== 'small' && !showBack;
 
-  useEffect(() => {
-    if (!isInteractive) return;
-    const el = elRef.current;
-    if (!el) return;
+  // UPDATED LOGIC: Interactive effect is enabled for 'grid' and 'large' sizes.
+  // It is only disabled for 'small' and when the card back is showing.
+  const isInteractive = size !== 'small' && !showBack;
 
-    const handlePointerMove = (e: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width - 0.5;
-      const py = (e.clientY - rect.top) / rect.height - 0.5;
-      const ry = px * 10;
-      const rx = -py * 8;
-      gsap.to(el, { rotationY: ry, rotationX: rx, scale: 1.02, duration: 0.25, ease: 'power3.out' });
-    };
+  useEffect(() => {
+    if (!isInteractive) return;
+    const el = elRef.current;
+    if (!el) return;
 
-    const handlePointerLeave = () => {
-      gsap.to(el, { rotationY: 0, rotationX: 0, scale: 1, duration: 0.6, ease: 'elastic.out(1,0.6)' });
-    };
+    const handlePointerMove = (e: PointerEvent) => {
+      const rect = el.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      const ry = px * 10;
+      const rx = -py * 8;
+      gsap.to(el, { rotationY: ry, rotationX: rx, scale: 1.02, duration: 0.25, ease: 'power3.out' });
+    };
 
-    el.addEventListener('pointermove', handlePointerMove);
-    el.addEventListener('pointerleave', handlePointerLeave);
-    el.addEventListener('pointercancel', handlePointerLeave);
+    const handlePointerLeave = () => {
+      gsap.to(el, { rotationY: 0, rotationX: 0, scale: 1, duration: 0.6, ease: 'elastic.out(1,0.6)' });
+    };
 
-    return () => {
-      el.removeEventListener('pointermove', handlePointerMove);
-      el.removeEventListener('pointerleave', handlePointerLeave);
-      el.removeEventListener('pointercancel', handlePointerLeave);
-    };
-  }, [isInteractive]);
+    el.addEventListener('pointermove', handlePointerMove);
+    el.addEventListener('pointerleave', handlePointerLeave);
+    el.addEventListener('pointercancel', handlePointerLeave);
+
+    return () => {
+      el.removeEventListener('pointermove', handlePointerMove);
+      el.removeEventListener('pointerleave', handlePointerLeave);
+      el.removeEventListener('pointercancel', handlePointerLeave);
+    };
+  }, [isInteractive]);
 
   const cardSizeClasses = getSizeClasses(size);
 
   const imgSmall = tcgCard.images.small;
   const imgLarge = tcgCard.images.large || imgSmall;
-  
+
   // UPDATED LOGIC: Only use small image for 'small' size.
   // 'grid' and 'large' now prioritize the large image for high quality.
   const imgSrc = (size === 'small') ? imgSmall || imgLarge : imgLarge;
@@ -113,14 +113,14 @@ export const PokemonCard = ({ card, className, style, showBack = false, size = '
       setLoaded(true);
     }
   }, [imgSrc, showBack]);
-  
+
   // We need to prepare the content before any conditional return statements
   const renderContent = () => {
     // Show skeleton while loading
     if (showSkeleton) {
       return <CardSkeleton size={size} className={className} />;
     }
-    
+
     return (
       <div
         ref={elRef}
@@ -176,9 +176,9 @@ export const PokemonCard = ({ card, className, style, showBack = false, size = '
     // This is unchanged - still an early return, but we've declared all hooks before this point
     return (
       <div className={cn('relative rounded-2xl overflow-hidden shadow-2xl', cardSizeClasses, className)} style={style}>
-        <img 
-          src={cardBackImage} 
-          alt="Pokémon Card Back" 
+        <img
+          src={cardBackImage}
+          alt="Pokémon Card Back"
           className="w-full h-full object-contain bg-card"
           loading="eager"
           decoding="sync"
@@ -186,7 +186,7 @@ export const PokemonCard = ({ card, className, style, showBack = false, size = '
       </div>
     );
   }
-  
+
   // For the front of the card, use our renderContent function that contains all the card front logic
   return renderContent();
 };
