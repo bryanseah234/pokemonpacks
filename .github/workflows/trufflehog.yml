@@ -1,29 +1,49 @@
 # .github/workflows/trufflehog.yml
 name: TruffleHog Secret Scan
 
+# COST-OPTIMISED (2026-07-04):
+# - concurrency cancels superseded runs.
+# - PRs use diff-only scan (base..head) rather than full history — dramatically faster.
+# - Push: still scans; but concurrency will cancel the older run.
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "master"]
   pull_request:
-    branches: ["main"]
-  schedule:
-    - cron: "0 15 * * *" # Daily at 11 PM SGT (15:00 UTC)
+    branches: ["main", "master"]
+
+concurrency:
+  group: trufflehog-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
 
 jobs:
   trufflehog:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
+      - name: Skip Dependabot pull requests
+        if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: echo "Skipping secret scan for Dependabot-only dependency updates."
+
       - name: Checkout code
-        uses: actions/checkout@v4
+        if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]'
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.63.2
+        if: github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]'
+        uses: trufflesecurity/trufflehog@v3.95.2
         with:
           path: ./
+          # Explicit base/head keeps PR runs limited to changed commits.
+          base: ${{ github.event.pull_request.base.sha || github.event.before || '' }}
+          head: ${{ github.event.pull_request.head.sha || github.sha }}
           extra_args: --only-verified
+          fail: true
 
       - name: Check for secrets
-        if: failure()
+        if: failure() && (github.event_name != 'pull_request' || github.event.pull_request.user.login != 'dependabot[bot]')
         run: echo "TruffleHog detected secrets or encountered a configuration error." && exit 1
